@@ -1,119 +1,259 @@
-	<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>巡回記録システム</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+JP:wght@400;600&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>巡回記録</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet"/>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; background: #080d18; color: #dde8f5; font-family: 'Courier New', monospace; }
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: #0d1428; }
-    ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 2px; }
-    input[type=time]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-    .scanlines {
-      position: fixed; top:0; left:0; right:0; bottom:0; pointer-events:none; z-index:999;
-      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    :root {
+      --bg: #0b0f1a;
+      --surface: #131929;
+      --surface2: #1a2235;
+      --border: #1e2d47;
+      --accent: #3b82f6;
+      --accent2: #06b6d4;
+      --success: #10b981;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --text: #e2eaf5;
+      --text2: #7a90b0;
+      --text3: #3a5070;
+      --radius: 14px;
+      --radius-sm: 8px;
     }
-    .fade-in { animation: fadeIn 0.25s ease; }
-    .pulse { animation: pulse 1s infinite; }
-    button { cursor: pointer; font-family: 'Share Tech Mono', monospace; }
-    input { font-family: 'Courier New', monospace; }
-    .tab-content { max-width: 680px; margin: 0 auto; padding: 18px 14px 80px; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;overflow-x:hidden;}
+    button{font-family:'Noto Sans JP',sans-serif;cursor:pointer;border:none;outline:none;}
+    input,textarea{font-family:'Noto Sans JP',sans-serif;outline:none;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes popIn{from{opacity:0;transform:scale(0.94)}to{opacity:1;transform:scale(1)}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    @keyframes slideDown{from{opacity:0;max-height:0}to{opacity:1;max-height:200px}}
+    @keyframes ripple{from{transform:scale(0);opacity:.4}to{transform:scale(2.5);opacity:0}}
 
-    /* header */
-    #header {
-      background: linear-gradient(135deg, #060b18 0%, #0d1628 100%);
-      border-bottom: 1px solid #0f2a4a;
-      padding: 14px 20px;
-      position: sticky; top: 0; z-index: 100;
-      box-shadow: 0 1px 30px rgba(0,80,200,0.1);
-      display: flex; align-items: center; justify-content: space-between;
+    /* ── HEADER ── */
+    #header{
+      background:linear-gradient(135deg,#0d1525,#111e35);
+      border-bottom:1px solid var(--border);
+      padding:14px 18px 12px;
+      position:sticky;top:0;z-index:200;
+      display:flex;align-items:center;justify-content:space-between;
     }
-    .header-logo {
-      width:34px; height:34px; border-radius:8px;
-      background: linear-gradient(135deg,#003db3,#0099cc);
-      display:flex; align-items:center; justify-content:center;
-      font-size:17px; box-shadow:0 0 14px rgba(0,100,220,0.5);
+    .header-left{display:flex;align-items:center;gap:10px;}
+    .logo{
+      width:36px;height:36px;border-radius:10px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      display:flex;align-items:center;justify-content:center;
+      font-size:18px;box-shadow:0 0 16px rgba(59,130,246,.4);
+      flex-shrink:0;
     }
-    #clock { font-family:'Share Tech Mono',monospace; font-size:20px; color:#00c8ff; letter-spacing:0.1em; font-variant-numeric:tabular-nums; text-align:right; }
-    #clock-date { font-size:10px; color:#2a5a80; text-align:right; }
+    .app-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:#c8dff5;letter-spacing:.05em;}
+    .app-sub{font-size:10px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;}
+    #clock{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:600;color:var(--accent2);letter-spacing:.08em;font-variant-numeric:tabular-nums;text-align:right;}
+    #clock-date{font-size:10px;color:var(--text3);text-align:right;}
 
-    /* tabs */
-    #tab-bar { display:flex; background:#060b18; border-bottom:1px solid #0f2a4a; position:sticky; top:62px; z-index:99; }
-    .tab-btn {
-      flex:1; padding:11px 0; background:transparent; color:#2a5a80;
-      border:none; border-bottom:2px solid transparent;
-      font-family:'Share Tech Mono',monospace; font-size:12px; letter-spacing:0.08em;
-      transition:all 0.2s;
+    /* ── TABS ── */
+    #tabs{
+      display:flex;background:#0d1525;
+      border-bottom:1px solid var(--border);
+      position:sticky;top:64px;z-index:199;
     }
-    .tab-btn.active { background:#0d1628; color:#00c8ff; border-bottom:2px solid #00c8ff; }
-
-    /* cards */
-    .card { background:#0a1020; border:1px solid #0f2040; border-radius:10px; padding:13px 15px; }
-    .label { font-size:10px; color:#2a5a80; letter-spacing:0.12em; text-transform:uppercase; font-family:'Share Tech Mono',monospace; }
-
-    /* inputs */
-    .inp {
-      background:#060b18; border:1px solid #0f2a4a; border-radius:6px;
-      color:#c0d8f0; font-size:12px; padding:6px 10px; outline:none;
-      font-family:'Courier New',monospace;
+    .tab{
+      flex:1;padding:11px 0;background:transparent;color:var(--text3);
+      border:none;border-bottom:2px solid transparent;
+      font-size:12px;letter-spacing:.06em;transition:all .2s;
     }
-    .inp:focus { border-color:#0057c8; }
+    .tab.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(59,130,246,.05);}
 
-    /* buttons */
-    .btn {
-      background:#0f2040; color:#c0d8f0; border:none; border-radius:6px;
-      padding:5px 12px; font-size:11px; letter-spacing:0.05em;
-      transition:opacity 0.15s; white-space:nowrap;
+    /* ── CONTENT ── */
+    .page{display:none;padding:14px 14px 100px;max-width:600px;margin:0 auto;}
+    .page.active{display:block;animation:fadeUp .25s ease;}
+
+    /* ── CARDS ── */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 15px;margin-bottom:10px;}
+    .card-label{font-size:10px;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;font-weight:600;margin-bottom:6px;}
+
+    /* ── PROGRESS ── */
+    #progress-wrap{margin-bottom:10px;}
+    #progress-bar-bg{height:5px;background:#0f1e35;border-radius:3px;overflow:hidden;margin-top:7px;}
+    #progress-bar{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s ease;width:0%;}
+    #progress-bar.done{background:linear-gradient(90deg,var(--success),var(--accent2));}
+
+    /* ── TOOLBAR ── */
+    #toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
+    .btn{
+      display:inline-flex;align-items:center;gap:5px;
+      padding:8px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;
+      border:1px solid transparent;transition:all .15s;position:relative;overflow:hidden;
     }
-    .btn:hover { opacity:0.8; }
-    .btn-primary { background:linear-gradient(135deg,#0040aa,#0080cc); color:#fff; font-size:12px; font-weight:bold; padding:7px 14px; border-radius:8px; box-shadow:0 0 10px rgba(0,80,200,0.4); border:none; }
-    .btn-primary:hover { box-shadow:0 0 18px rgba(0,100,255,0.7); }
-    .btn-danger { color:#cc4444; }
-    .btn-success { color:#00ff88; border:1px solid #00aa55; }
+    .btn-ghost{background:var(--surface2);color:var(--text2);border-color:var(--border);}
+    .btn-ghost:active{background:var(--border);}
+    .btn-primary{background:linear-gradient(135deg,#1d4ed8,#0284c7);color:#fff;box-shadow:0 0 12px rgba(59,130,246,.3);}
+    .btn-primary:active{box-shadow:0 0 20px rgba(59,130,246,.5);}
+    .btn-success{background:linear-gradient(135deg,#065f46,#047857);color:#6ee7b7;border-color:#064e3b;}
+    .btn-success:active{background:linear-gradient(135deg,#047857,#059669);}
+    .btn-danger-ghost{background:var(--surface2);color:var(--danger);border-color:#3a1515;}
+    .btn-clear{background:linear-gradient(135deg,#7c1d1d,#991b1b);color:#fca5a5;border-color:#7f1d1d;}
 
-    /* location row */
-    .loc-row {
-      background:#0a1020; border:1px solid #0f2040; border-radius:9px; padding:12px 14px;
-      display:flex; align-items:center; gap:10; transition:all 0.15s;
+    /* ── START BUTTON ── */
+    .start-btn{
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      color:#fff;border:none;border-radius:10px;
+      padding:9px 16px;font-size:13px;font-weight:700;
+      box-shadow:0 0 12px rgba(59,130,246,.35);
+      transition:all .15s;white-space:nowrap;
+      font-family:'Rajdhani',sans-serif;letter-spacing:.05em;
     }
-    .loc-row.recorded { background:rgba(0,60,160,0.1); border-color:#1a3a6a; box-shadow:0 0 10px rgba(0,80,200,0.1); }
-    .loc-row.drag-over { border-color:#0057c8; }
-    .dot { width:8px; height:8px; border-radius:50%; background:#0f2040; flex-shrink:0; transition:all 0.3s; }
-    .dot.on { background:#00c8ff; box-shadow:0 0 6px #00c8ff; }
+    .start-btn:active{box-shadow:0 0 22px rgba(59,130,246,.6);transform:scale(.97);}
 
-    /* progress */
-    .progress-bar-bg { height:5px; background:#0f2040; border-radius:3px; overflow:hidden; }
-    .progress-bar-fill { height:100%; border-radius:3px; transition:width 0.4s ease; background:linear-gradient(90deg,#0057c8,#00c8ff); }
-    .progress-bar-fill.complete { background:linear-gradient(90deg,#00ff88,#00c8ff); }
-
-    /* history */
-    .hist-btn {
-      background:#0a1020; border:1px solid #0f2040; border-radius:10px; padding:13px 15px;
-      display:flex; align-items:center; justify-content:space-between;
-      width:100%; text-align:left; color:#dde8f5; transition:border-color 0.15s;
+    /* ── LOCATION ROW ── */
+    .loc-wrap{margin-bottom:8px;animation:fadeUp .2s ease;}
+    .loc-row{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius);padding:13px 14px;
+      display:flex;align-items:center;gap:10px;
+      transition:all .2s;
     }
-    .hist-btn:hover { border-color:#0057c8; }
+    .loc-row.recorded{background:rgba(59,130,246,.07);border-color:#1e3a6e;}
+    .loc-row.drag-over{border-color:var(--accent);}
+    .status-dot{width:9px;height:9px;border-radius:50%;background:var(--border);flex-shrink:0;transition:all .3s;}
+    .status-dot.on{background:var(--accent2);box-shadow:0 0 7px var(--accent2);}
+    .loc-name{flex:1;font-size:14px;font-weight:500;color:var(--text2);}
+    .loc-name.done{color:var(--text);}
+    .time-display{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:600;color:var(--accent2);font-variant-numeric:tabular-nums;letter-spacing:.05em;}
 
-    /* confirm overlay */
-    .confirm-box { background:rgba(0,40,20,0.15); border:1px solid #00aa55; border-radius:10px; padding:13px 15px; margin-bottom:12px; }
+    /* ── NOTE AREA ── */
+    .note-area{
+      overflow:hidden;max-height:0;transition:max-height .3s ease,opacity .3s ease;opacity:0;
+    }
+    .note-area.open{max-height:200px;opacity:1;}
+    .note-inner{padding:8px 14px 12px;border-top:1px solid var(--border);}
+    .note-textarea{
+      width:100%;background:#0d1525;border:1px solid var(--border);border-radius:var(--radius-sm);
+      color:var(--text);font-size:13px;padding:9px 11px;resize:none;height:72px;
+      line-height:1.5;
+    }
+    .note-textarea:focus{border-color:var(--accent);}
+    .note-textarea::placeholder{color:var(--text3);}
+    .note-toggle{
+      background:transparent;border:none;color:var(--text3);font-size:18px;
+      width:30px;height:30px;display:flex;align-items:center;justify-content:center;
+      border-radius:6px;flex-shrink:0;transition:all .2s;
+    }
+    .note-toggle:active{background:var(--border);}
+    .note-badge{
+      width:7px;height:7px;border-radius:50%;background:var(--warn);
+      box-shadow:0 0 5px var(--warn);margin-left:2px;flex-shrink:0;
+    }
+
+    /* ── TIME EDIT ── */
+    .time-edit-wrap{display:flex;align-items:center;gap:6px;}
+    input[type=time]{
+      background:#0d1525;border:1px solid var(--accent);border-radius:var(--radius-sm);
+      color:var(--accent2);font-size:14px;padding:5px 8px;width:100px;
+      font-family:'Rajdhani',sans-serif;
+    }
+    input[type=time]::-webkit-calendar-picker-indicator{filter:invert(.5);}
+
+    /* ── COMPLETE CONFIRM ── */
+    #complete-confirm{
+      background:rgba(6,78,59,.15);border:1px solid #065f46;border-radius:var(--radius);
+      padding:14px 15px;margin-bottom:12px;display:none;animation:popIn .2s ease;
+    }
+    #complete-confirm p{font-size:13px;color:#6ee7b7;margin-bottom:10px;}
+
+    /* ── SHARE MODAL ── */
+    #share-modal{
+      position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;
+      display:none;align-items:flex-end;justify-content:center;
+      padding-bottom:env(safe-area-inset-bottom);
+    }
+    #share-modal.open{display:flex;animation:fadeUp .2s ease;}
+    .share-sheet{
+      background:#131929;border:1px solid var(--border);border-radius:20px 20px 0 0;
+      padding:20px 18px 30px;width:100%;max-width:600px;
+    }
+    .share-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
+    .share-title{font-family:'Rajdhani',sans-serif;font-size:14px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;}
+    #share-text{
+      background:#0d1525;border:1px solid var(--border);border-radius:var(--radius-sm);
+      color:var(--text);font-size:13px;padding:12px 13px;width:100%;
+      height:220px;resize:none;line-height:1.8;margin-bottom:12px;
+    }
+    .share-actions{display:flex;gap:8px;}
+    #copy-btn{
+      flex:1;background:linear-gradient(135deg,var(--accent),var(--accent2));
+      color:#fff;border:none;border-radius:var(--radius-sm);padding:13px;
+      font-size:14px;font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:.06em;
+      transition:all .2s;
+    }
+    #copy-btn:active{opacity:.85;}
+    #copy-btn.copied{background:linear-gradient(135deg,#065f46,#047857);color:#6ee7b7;}
+    #close-share{
+      background:var(--surface2);color:var(--text2);border:1px solid var(--border);
+      border-radius:var(--radius-sm);padding:13px 18px;font-size:14px;
+    }
+
+    /* ── CLEAR CONFIRM ── */
+    #clear-confirm{
+      position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;
+      display:none;align-items:center;justify-content:center;padding:20px;
+    }
+    #clear-confirm.open{display:flex;animation:popIn .2s ease;}
+    .clear-sheet{
+      background:var(--surface);border:1px solid #3a1515;border-radius:var(--radius);
+      padding:22px 20px;width:100%;max-width:340px;text-align:center;
+    }
+    .clear-sheet h3{font-size:16px;color:var(--danger);margin-bottom:8px;}
+    .clear-sheet p{font-size:13px;color:var(--text2);margin-bottom:18px;line-height:1.6;}
+    .clear-actions{display:flex;gap:8px;}
+
+    /* ── HISTORY ── */
+    .hist-item{
+      background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+      padding:14px 15px;margin-bottom:8px;
+      display:flex;align-items:center;justify-content:space-between;
+      cursor:pointer;transition:border-color .15s;
+    }
+    .hist-item:active{border-color:var(--accent);}
+    .hist-date{font-size:11px;color:var(--text3);margin-bottom:3px;font-family:'Rajdhani',sans-serif;letter-spacing:.08em;}
+    .hist-name{font-size:14px;color:var(--text);}
+    .hist-count{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--accent2);}
+
+    /* ── SETTINGS ── */
+    .setting-input{
+      width:100%;background:#0d1525;border:1px solid var(--border);
+      border-radius:var(--radius-sm);color:var(--text);font-size:13px;
+      padding:9px 11px;margin-top:7px;transition:border-color .2s;
+    }
+    .setting-input:focus{border-color:var(--accent);}
+
+    /* ── SAVE STATUS ── */
+    #save-status{font-size:11px;color:var(--text3);}
+    #save-status.saved{color:var(--success);}
+
+    /* ── EMPTY STATE ── */
+    .empty{text-align:center;padding:40px 0;color:var(--text3);font-size:13px;}
+
+    /* ── EDIT MODE ── */
+    .drag-handle{color:var(--text3);font-size:18px;cursor:grab;user-select:none;padding:0 2px;}
+    #drag-hint{text-align:center;font-size:11px;color:var(--text3);margin-top:6px;display:none;}
+    #add-loc-bar{display:none;flex-direction:row;gap:8px;align-items:center;}
+
+    /* ── BOTTOM SAFE ── */
+    .bottom-safe{height:env(safe-area-inset-bottom,20px);}
   </style>
 </head>
 <body>
-<div class="scanlines"></div>
 
 <!-- HEADER -->
 <div id="header">
-  <div style="display:flex;align-items:center;gap:12px;">
-    <div class="header-logo">🛡</div>
+  <div class="header-left">
+    <div class="logo">🛡</div>
     <div>
-      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#2a5a80;letter-spacing:0.2em;text-transform:uppercase;">DC SECURITY PATROL</div>
-      <div style="font-family:'Share Tech Mono',monospace;font-size:14px;color:#8ab8d8;letter-spacing:0.08em;">巡回記録システム v2</div>
+      <div class="app-sub">Security Patrol</div>
+      <div class="app-title">巡回記録</div>
     </div>
   </div>
   <div>
@@ -122,564 +262,613 @@
   </div>
 </div>
 
-<!-- TAB BAR -->
-<div id="tab-bar">
-  <button class="tab-btn active" data-tab="patrol" onclick="switchTab('patrol')">🗺 巡回</button>
-  <button class="tab-btn" data-tab="history" onclick="switchTab('history')">📋 履歴</button>
-  <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">⚙ 設定</button>
+<!-- TABS -->
+<div id="tabs">
+  <button class="tab active" data-tab="patrol" onclick="switchTab('patrol')">🗺 巡回</button>
+  <button class="tab" data-tab="history" onclick="switchTab('history')">📋 履歴</button>
+  <button class="tab" data-tab="settings" onclick="switchTab('settings')">⚙ 設定</button>
 </div>
 
-<!-- PATROL TAB -->
-<div id="tab-patrol" class="tab-content fade-in">
+<!-- ═══ PATROL PAGE ═══ -->
+<div id="page-patrol" class="page active">
 
   <!-- Patrol name -->
-  <div class="card" style="margin-bottom:12px;display:flex;align-items:center;gap:10px;" id="patrol-name-bar">
-    <span class="label">巡回名</span>
-    <span id="patrol-name-display" style="flex:1;font-size:13px;color:#1e3a5f;">未設定</span>
-    <button class="btn" onclick="startEditPatrolName()">編集</button>
+  <div class="card" id="patrol-name-card">
+    <div class="card-label">巡回名称</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span id="pname-display" style="flex:1;font-size:14px;color:var(--text3);">未設定</span>
+      <button class="btn btn-ghost" onclick="editPatrolName()" style="padding:5px 10px;font-size:11px;">編集</button>
+    </div>
   </div>
 
   <!-- Progress -->
-  <div class="card" style="margin-bottom:12px;">
-    <div style="display:flex;justify-content:space-between;margin-bottom:7px;">
-      <span class="label">進捗</span>
-      <span id="progress-text" style="font-family:'Share Tech Mono',monospace;font-size:13px;color:#00c8ff;">0 / 0（0%）</span>
+  <div class="card" id="progress-wrap">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span class="card-label" style="margin:0;">進捗</span>
+      <span id="progress-text" style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:var(--accent2);">0 / 0</span>
     </div>
-    <div class="progress-bar-bg"><div id="progress-fill" class="progress-bar-fill" style="width:0%"></div></div>
+    <div id="progress-bar-bg"><div id="progress-bar"></div></div>
   </div>
 
   <!-- Toolbar -->
-  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
-    <button class="btn" id="edit-mode-btn" onclick="toggleEditMode()">✏️ 場所を編集</button>
-    <button class="btn" onclick="manualSave()">💾 保存</button>
-    <span id="save-status" style="font-size:11px;color:#2a5a80;"></span>
-    <div style="margin-left:auto;">
-      <button class="btn btn-success" onclick="showCompleteConfirm()">✔ 巡回完了</button>
-    </div>
+  <div id="toolbar">
+    <button class="btn btn-ghost" id="edit-mode-btn" onclick="toggleEdit()">✏️ 編集</button>
+    <button class="btn btn-ghost" onclick="manualSave()">💾 保存</button>
+    <span id="save-status"></span>
+    <button class="btn btn-success" onclick="showComplete()" style="margin-left:auto;">✔ 完了</button>
   </div>
 
   <!-- Complete confirm -->
-  <div id="complete-confirm" class="confirm-box" style="display:none;">
-    <p style="font-size:13px;color:#80d0a8;margin-bottom:10px;">この巡回を完了して履歴に保存しますか？</p>
+  <div id="complete-confirm">
+    <p>巡回を完了して履歴に保存しますか？</p>
     <div style="display:flex;gap:8px;">
-      <button class="btn" style="background:#006633;" onclick="completePatrol()">はい、完了する</button>
-      <button class="btn" onclick="hideCompleteConfirm()">キャンセル</button>
+      <button class="btn btn-success" onclick="completePatrol()">はい</button>
+      <button class="btn btn-ghost" onclick="hideComplete()">キャンセル</button>
     </div>
   </div>
 
   <!-- Location list -->
-  <div id="location-list" style="display:flex;flex-direction:column;gap:7px;"></div>
+  <div id="loc-list"></div>
 
   <!-- Add location (edit mode) -->
-  <div id="add-loc-bar" class="card" style="display:none;margin-top:10px;border:1px dashed #0f2a4a;flex-direction:row;gap:8px;align-items:center;">
-    <span class="label">＋ 追加</span>
-    <input id="new-loc-input" class="inp" style="flex:1;" placeholder="場所名 (例: B1F 機械室)"
-      onkeydown="if(event.key==='Enter')addLocation()" />
-    <button class="btn" style="background:#0057c8;" onclick="addLocation()">追加</button>
-  </div>
-  <p id="drag-hint" style="display:none;text-align:center;font-size:11px;color:#1e3a5f;margin-top:8px;">ドラッグ＆ドロップで順番を変更できます</p>
-
-  <!-- Send button -->
-  <div class="card" style="margin-top:16px;display:flex;align-items:center;gap:10px;justify-content:space-between;">
-    <div>
-      <div style="font-size:11px;color:#2a5a80;margin-bottom:2px;">サーバー送信</div>
-      <div id="send-url-status" style="font-size:10px;color:#cc4444;">送信先URL未設定 (設定タブで追加)</div>
+  <div class="card" id="add-loc-bar" style="margin-top:4px;">
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input id="new-loc-input" class="setting-input" style="flex:1;margin:0;" placeholder="場所名を入力"
+        onkeydown="if(event.key==='Enter')addLoc()"/>
+      <button class="btn btn-primary" onclick="addLoc()">追加</button>
     </div>
-    <button id="send-btn" onclick="handleSend()" style="
-      background:linear-gradient(135deg,#003580,#0055cc);color:#fff;border:none;border-radius:8px;
-      padding:9px 18px;font-size:12px;font-family:'Share Tech Mono',monospace;letter-spacing:0.08em;
-      min-width:100px;box-shadow:0 0 12px rgba(0,60,180,0.3);transition:all 0.2s;">📡 送信</button>
   </div>
+  <p id="drag-hint">⠿ ドラッグで順番変更</p>
+
+  <!-- Action bar -->
+  <div style="display:flex;gap:8px;margin-top:14px;">
+    <button class="btn btn-ghost" onclick="openShare()" style="flex:1;justify-content:center;font-size:13px;">
+      📤 共有
+    </button>
+    <button class="btn btn-clear" onclick="openClear()" style="flex:1;justify-content:center;font-size:13px;">
+      🗑 全クリア
+    </button>
+  </div>
+
 </div>
 
-<!-- HISTORY TAB -->
-<div id="tab-history" class="tab-content fade-in" style="display:none;">
-  <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#2a5a80;margin-bottom:14px;letter-spacing:0.12em;" id="history-header">PATROL HISTORY — 0 件</div>
+<!-- ═══ HISTORY PAGE ═══ -->
+<div id="page-history" class="page">
+  <div id="history-header" style="font-family:'Rajdhani',sans-serif;font-size:11px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;">PATROL HISTORY — 0件</div>
   <div id="history-list"></div>
   <div id="history-detail" style="display:none;"></div>
 </div>
 
-<!-- SETTINGS TAB -->
-<div id="tab-settings" class="tab-content fade-in" style="display:none;">
-  <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#2a5a80;margin-bottom:14px;letter-spacing:0.12em;">SYSTEM SETTINGS</div>
-  <div style="display:flex;flex-direction:column;gap:12px;">
-
-    <div class="card">
-      <div class="label">担当者名</div>
-      <input id="staff-name-input" class="inp" style="width:100%;margin-top:6px;" placeholder="例: 山田 太郎"
-        oninput="settings.staffName=this.value;saveSettings()" />
+<!-- ═══ SETTINGS PAGE ═══ -->
+<div id="page-settings" class="page">
+  <div class="card">
+    <div class="card-label">担当者名</div>
+    <input id="staff-input" class="setting-input" placeholder="例: 山田 太郎"
+      oninput="settings.staffName=this.value;saveSettings()"/>
+  </div>
+  <div class="card">
+    <div class="card-label">サーバー送信先 URL（任意）</div>
+    <div style="font-size:11px;color:var(--text3);margin:3px 0 2px;">設定すると共有画面からPOST送信できます</div>
+    <input id="url-input" class="setting-input" placeholder="https://your-server.com/api/patrol"
+      oninput="settings.serverUrl=this.value;saveSettings()"/>
+  </div>
+  <div class="card">
+    <div class="card-label">データ管理</div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="exportHistory()">📥 履歴エクスポート</button>
+      <button class="btn btn-danger-ghost" onclick="clearAllHistory()">🗑 履歴全削除</button>
     </div>
-
-    <div class="card">
-      <div class="label">サーバー送信先 URL</div>
-      <div style="font-size:10px;color:#2a5a80;margin:3px 0 6px;">POST リクエストでJSON形式の巡回データを送信します</div>
-      <input id="server-url-input" class="inp" style="width:100%;font-family:'Share Tech Mono',monospace;font-size:11px;"
-        placeholder="https://your-server.com/api/patrol"
-        oninput="settings.serverUrl=this.value;saveSettings();updateSendUrlStatus()" />
-      <div style="margin-top:8px;font-size:10px;color:#1e4a30;background:rgba(0,40,20,0.3);border:1px solid #0f3020;border-radius:6px;padding:8px 10px;line-height:1.6;">
-        送信されるJSONの形式:<br/>
-        <span style="color:#4a9070;">{ date, name, staffName, records: [{location, time}] }</span>
-      </div>
+  </div>
+  <div class="card" style="font-size:12px;color:var(--text3);line-height:1.8;">
+    <div class="card-label">保存について</div>
+    <div style="margin-top:6px;">
+      • 操作のたびに自動でlocalStorageに保存<br/>
+      • ブラウザを閉じてもデータは保持されます<br/>
+      • 「完了」で履歴に保存・記録はリセット<br/>
+      • 履歴は最大60件
     </div>
+  </div>
+</div>
 
-    <div class="card">
-      <div class="label">データ管理</div>
-      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
-        <button class="btn" onclick="exportHistory()">📥 履歴をエクスポート (JSON)</button>
-        <button class="btn btn-danger" onclick="clearAllHistory()">🗑 履歴を全削除</button>
-      </div>
+<!-- ═══ SHARE MODAL ═══ -->
+<div id="share-modal" onclick="closeShareOutside(event)">
+  <div class="share-sheet">
+    <div class="share-handle"></div>
+    <div class="share-title">📤 巡回レポート共有</div>
+    <textarea id="share-text" readonly></textarea>
+    <div class="share-actions">
+      <button id="copy-btn" onclick="copyReport()">📋 全てコピー</button>
+      <button class="btn btn-ghost" id="close-share" onclick="closeShare()">閉じる</button>
     </div>
+  </div>
+</div>
 
-    <div class="card" style="font-size:11px;color:#1e3a5f;line-height:1.7;">
-      <div class="label">保存について</div>
-      <div style="margin-top:6px;">
-        • 巡回中の記録は操作のたびに自動保存されます<br/>
-        • ブラウザを閉じても記録は保持されます（localStorage）<br/>
-        • 「巡回完了」ボタンで履歴に保存されます<br/>
-        • 履歴は最大60件保存されます
-      </div>
+<!-- ═══ CLEAR CONFIRM ═══ -->
+<div id="clear-confirm" onclick="closeClearOutside(event)">
+  <div class="clear-sheet">
+    <h3>⚠ 全クリア</h3>
+    <p>全ての記録時刻と備考を削除します。<br/>この操作は元に戻せません。</p>
+    <div class="clear-actions">
+      <button class="btn btn-clear" style="flex:1;justify-content:center;" onclick="clearAll()">クリアする</button>
+      <button class="btn btn-ghost" style="flex:1;justify-content:center;" onclick="closeClear()">キャンセル</button>
     </div>
   </div>
 </div>
 
 <script>
-// ─── state ────────────────────────────────────────────────────────────────────
-const KEYS = { locations:'patrol_locations', session:'patrol_session', history:'patrol_history', settings:'patrol_settings' };
+// ── KEYS ──────────────────────────────────────────────────────────────────────
+const K={locs:'p_locs',sess:'p_sess',hist:'p_hist',sett:'p_sett'};
 
-const DEFAULT_LOCATIONS = [
-  {id:1,name:'1F エントランス'},
-  {id:2,name:'1F サーバーホール A'},
-  {id:3,name:'2F サーバーホール B'},
-  {id:4,name:'2F 電源室'},
-  {id:5,name:'3F 監視室'},
-  {id:6,name:'屋上 空調設備'},
+// ── DEFAULT ───────────────────────────────────────────────────────────────────
+const DEFAULT_LOCS=[
+  {id:1,name:'1F / 外構'},
+  {id:2,name:'2F'},
+  {id:3,name:'3F'},
+  {id:4,name:'4F'},
+  {id:5,name:'5F'},
+  {id:6,name:'6F'},
+  {id:7,name:'PH'},
 ];
 
-let locations = DEFAULT_LOCATIONS;
-let records   = {};   // { id: Date }
-let patrolName = '';
-let history   = [];
-let settings  = { serverUrl:'', staffName:'' };
-let editMode  = false;
-let draggingId = null;
-let currentTab = 'patrol';
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let locs=[...DEFAULT_LOCS];
+let records={};   // id -> Date
+let notes={};     // id -> string
+let patrolName='';
+let history=[];
+let settings={staffName:'',serverUrl:''};
+let editMode=false;
+let draggingId=null;
 
-// ─── storage ──────────────────────────────────────────────────────────────────
-function lsGet(key) { try { const v=localStorage.getItem(key); return v?JSON.parse(v):null; } catch{return null;} }
-function lsSet(key,val) { try { localStorage.setItem(key,JSON.stringify(val)); } catch{} }
-
-function serializeRecords(recs) {
-  const out={};
-  Object.entries(recs).forEach(([k,v])=>{ out[k]=v instanceof Date?v.toISOString():v; });
-  return out;
-}
-function deserializeRecords(recs) {
-  const out={};
-  Object.entries(recs||{}).forEach(([k,v])=>{ out[k]=new Date(v); });
-  return out;
-}
-
-function autoSave() {
-  lsSet(KEYS.locations, locations);
-  lsSet(KEYS.session, { name:patrolName, records:serializeRecords(records), date:todayKey() });
-  showSaveStatus('saved');
-}
-function manualSave() { autoSave(); }
-function saveSettings() { lsSet(KEYS.settings, settings); }
-
-function showSaveStatus(st) {
-  const el=document.getElementById('save-status');
-  if(st==='saved'){el.textContent='✓ 保存済';el.style.color='#00aa66';}
-  else{el.textContent='保存中…';el.style.color='#2a5a80';}
-  clearTimeout(el._t);
-  el._t=setTimeout(()=>{el.textContent='';},1800);
-}
-
-// ─── helpers ──────────────────────────────────────────────────────────────────
-const pad = n=>String(n).padStart(2,'0');
-const fmt = d=>d?`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`:'──:──:──';
-const fmtShort = d=>d?`${pad(d.getHours())}:${pad(d.getMinutes())}`:'──:──';
-const todayKey = ()=>new Date().toISOString().slice(0,10);
-const fmtDate = iso=>{
-  const d=new Date(iso);
-  return d.toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'});
+// ── STORAGE ───────────────────────────────────────────────────────────────────
+const ls={
+  get:k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}},
+  set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}},
 };
+const serRec=r=>Object.fromEntries(Object.entries(r).map(([k,v])=>[k,v instanceof Date?v.toISOString():v]));
+const desRec=r=>Object.fromEntries(Object.entries(r||{}).map(([k,v])=>[k,new Date(v)]));
 
-// ─── clock ────────────────────────────────────────────────────────────────────
-function tickClock() {
-  const now=new Date();
-  document.getElementById('clock').textContent=fmt(now);
+function autoSave(){
+  ls.set(K.locs,locs);
+  ls.set(K.sess,{name:patrolName,records:serRec(records),notes,date:todayKey()});
+  showSaved();
+}
+function manualSave(){autoSave();}
+function saveSettings(){ls.set(K.sett,settings);}
+
+function showSaved(){
+  const el=document.getElementById('save-status');
+  el.textContent='✓ 保存済';el.className='saved';
+  clearTimeout(el._t);el._t=setTimeout(()=>{el.textContent='';el.className='';},1800);
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const pad=n=>String(n).padStart(2,'0');
+const fmt=d=>d?`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`:'──:──';
+const fmtShort=d=>d?`${pad(d.getHours())}:${pad(d.getMinutes())}`:'──:──';
+const todayKey=()=>new Date().toISOString().slice(0,10);
+const fmtDate=iso=>new Date(iso).toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'});
+
+// ── CLOCK ─────────────────────────────────────────────────────────────────────
+function tick(){
+  const n=new Date();
+  document.getElementById('clock').textContent=fmt(n);
   document.getElementById('clock-date').textContent=
-    now.toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'});
+    n.toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'});
 }
-setInterval(tickClock,1000);
-tickClock();
+setInterval(tick,1000);tick();
 
-// ─── tab ─────────────────────────────────────────────────────────────────────
-function switchTab(tab) {
-  currentTab=tab;
-  ['patrol','history','settings'].forEach(t=>{
-    document.getElementById('tab-'+t).style.display=t===tab?'block':'none';
-    document.querySelector(`[data-tab="${t}"]`).classList.toggle('active',t===tab);
-  });
-  if(tab==='history') renderHistory();
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function switchTab(t){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+t).classList.add('active');
+  document.querySelector(`[data-tab="${t}"]`).classList.add('active');
+  if(t==='history')renderHistory();
 }
 
-// ─── init ─────────────────────────────────────────────────────────────────────
-function init() {
-  const locs=lsGet(KEYS.locations);
-  const sess=lsGet(KEYS.session);
-  const hist=lsGet(KEYS.history);
-  const sett=lsGet(KEYS.settings);
-  if(locs) locations=locs;
-  if(sess){ patrolName=sess.name||''; records=deserializeRecords(sess.records); }
-  if(hist) history=hist;
-  if(sett){ settings=sett; document.getElementById('staff-name-input').value=sett.staffName||''; document.getElementById('server-url-input').value=sett.serverUrl||''; }
+// ── INIT ──────────────────────────────────────────────────────────────────────
+function init(){
+  const sl=ls.get(K.locs),ss=ls.get(K.sess),sh=ls.get(K.hist),st=ls.get(K.sett);
+  if(sl)locs=sl;
+  if(ss){patrolName=ss.name||'';records=desRec(ss.records);notes=ss.notes||{};}
+  if(sh)history=sh;
+  if(st){
+    settings=st;
+    document.getElementById('staff-input').value=st.staffName||'';
+    document.getElementById('url-input').value=st.serverUrl||'';
+  }
   updatePatrolNameDisplay();
-  updateSendUrlStatus();
-  renderLocations();
+  renderLocs();
   updateProgress();
 }
 
-// ─── patrol name ──────────────────────────────────────────────────────────────
-function updatePatrolNameDisplay() {
-  const el=document.getElementById('patrol-name-display');
+// ── PATROL NAME ───────────────────────────────────────────────────────────────
+function updatePatrolNameDisplay(){
+  const el=document.getElementById('pname-display');
   el.textContent=patrolName||'未設定';
-  el.style.color=patrolName?'#c0d8f0':'#1e3a5f';
+  el.style.color=patrolName?'var(--text)':'var(--text3)';
 }
-function startEditPatrolName() {
-  const bar=document.getElementById('patrol-name-bar');
-  bar.innerHTML=`
-    <span class="label">巡回名</span>
-    <input id="pn-inp" class="inp" style="flex:1;" value="${patrolName}" placeholder="例: 第1回夜間巡回"
-      onkeydown="if(event.key==='Enter')savePatrolName()" />
-    <button class="btn" style="background:#0057c8;" onclick="savePatrolName()">保存</button>
-    <button class="btn" onclick="cancelEditPatrolName()">✕</button>
-  `;
+function editPatrolName(){
+  const card=document.getElementById('patrol-name-card');
+  card.innerHTML=`
+    <div class="card-label">巡回名称</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <input id="pn-inp" class="setting-input" style="flex:1;margin:0;" value="${patrolName}" placeholder="例: 第1回夜間巡回"
+        onkeydown="if(event.key==='Enter')savePName()"/>
+      <button class="btn btn-primary" onclick="savePName()" style="padding:7px 12px;">保存</button>
+      <button class="btn btn-ghost" onclick="cancelPName()" style="padding:7px 10px;">✕</button>
+    </div>`;
   document.getElementById('pn-inp').focus();
 }
-function savePatrolName() {
-  patrolName=document.getElementById('pn-inp').value.trim();
-  const bar=document.getElementById('patrol-name-bar');
-  bar.innerHTML=`
-    <span class="label">巡回名</span>
-    <span id="patrol-name-display" style="flex:1;font-size:13px;">${patrolName||'未設定'}</span>
-    <button class="btn" onclick="startEditPatrolName()">編集</button>
-  `;
-  updatePatrolNameDisplay();
-  autoSave();
+function savePName(){
+  patrolName=(document.getElementById('pn-inp')||{}).value?.trim()||'';
+  resetPNameCard();autoSave();
 }
-function cancelEditPatrolName() {
-  const bar=document.getElementById('patrol-name-bar');
-  bar.innerHTML=`
-    <span class="label">巡回名</span>
-    <span id="patrol-name-display" style="flex:1;font-size:13px;">${patrolName||'未設定'}</span>
-    <button class="btn" onclick="startEditPatrolName()">編集</button>
-  `;
+function cancelPName(){resetPNameCard();}
+function resetPNameCard(){
+  const card=document.getElementById('patrol-name-card');
+  card.innerHTML=`
+    <div class="card-label">巡回名称</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span id="pname-display" style="flex:1;font-size:14px;"></span>
+      <button class="btn btn-ghost" onclick="editPatrolName()" style="padding:5px 10px;font-size:11px;">編集</button>
+    </div>`;
   updatePatrolNameDisplay();
 }
 
-// ─── progress ─────────────────────────────────────────────────────────────────
-function updateProgress() {
-  const total=locations.length;
-  const done=locations.filter(l=>records[l.id]).length;
-  const pct=total>0?Math.round(done/total*100):0;
-  document.getElementById('progress-text').textContent=`${done} / ${total}（${pct}%）`;
-  document.getElementById('progress-text').style.color=pct===100?'#00ff88':'#00c8ff';
-  const fill=document.getElementById('progress-fill');
-  fill.style.width=pct+'%';
-  fill.className='progress-bar-fill'+(pct===100?' complete':'');
-  fill.style.boxShadow=pct>0?'0 0 8px rgba(0,180,255,0.6)':'none';
+// ── PROGRESS ──────────────────────────────────────────────────────────────────
+function updateProgress(){
+  const total=locs.length,done=locs.filter(l=>records[l.id]).length;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('progress-text').textContent=`${done} / ${total}`;
+  document.getElementById('progress-text').style.color=pct===100?'var(--success)':'var(--accent2)';
+  const bar=document.getElementById('progress-bar');
+  bar.style.width=pct+'%';
+  bar.className='progress-bar'+(pct===100?' done':'');
+  bar.style.boxShadow=pct>0?'0 0 8px rgba(59,130,246,.5)':'none';
 }
 
-// ─── render locations ─────────────────────────────────────────────────────────
-function renderLocations() {
-  const list=document.getElementById('location-list');
+// ── RENDER LOCS ───────────────────────────────────────────────────────────────
+function renderLocs(){
+  const list=document.getElementById('loc-list');
   list.innerHTML='';
-  locations.forEach(loc=>{
+  locs.forEach(loc=>{
     const rec=records[loc.id];
+    const note=notes[loc.id]||'';
+    const hasNote=note.trim()!=='';
+    const wrap=document.createElement('div');
+    wrap.className='loc-wrap';
+    wrap.dataset.id=loc.id;
+
     const row=document.createElement('div');
     row.className='loc-row'+(rec?' recorded':'');
-    row.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:0;animation:fadeIn 0.2s ease;';
-    row.dataset.id=loc.id;
+    row.style.gap='10px';
+
+    // drag handle
     if(editMode){
-      row.draggable=true;
-      row.addEventListener('dragstart',()=>{ draggingId=loc.id; setTimeout(()=>row.style.opacity='0.35',0); });
-      row.addEventListener('dragend',()=>{ row.style.opacity='1'; draggingId=null; document.querySelectorAll('.loc-row').forEach(r=>r.classList.remove('drag-over')); });
-      row.addEventListener('dragover',e=>{ e.preventDefault(); row.classList.add('drag-over'); });
-      row.addEventListener('dragleave',()=>row.classList.remove('drag-over'));
-      row.addEventListener('drop',()=>{
+      const dh=document.createElement('span');
+      dh.className='drag-handle';dh.textContent='⠿';
+      row.appendChild(dh);
+      wrap.draggable=true;
+      wrap.addEventListener('dragstart',()=>{draggingId=loc.id;setTimeout(()=>wrap.style.opacity='.35',0);});
+      wrap.addEventListener('dragend',()=>{wrap.style.opacity='1';draggingId=null;document.querySelectorAll('.loc-row').forEach(r=>r.classList.remove('drag-over'));});
+      wrap.addEventListener('dragover',e=>{e.preventDefault();row.classList.add('drag-over');});
+      wrap.addEventListener('dragleave',()=>row.classList.remove('drag-over'));
+      wrap.addEventListener('drop',()=>{
         row.classList.remove('drag-over');
-        if(draggingId===loc.id) return;
-        const from=locations.findIndex(l=>l.id===draggingId);
-        const to=locations.findIndex(l=>l.id===loc.id);
-        const next=[...locations]; const [item]=next.splice(from,1); next.splice(to,0,item);
-        locations=next; renderLocations(); autoSave();
+        if(draggingId===loc.id)return;
+        const fi=locs.findIndex(l=>l.id===draggingId),ti=locs.findIndex(l=>l.id===loc.id);
+        const nl=[...locs];const[it]=nl.splice(fi,1);nl.splice(ti,0,it);
+        locs=nl;renderLocs();autoSave();
       });
     }
 
-    // drag handle
-    if(editMode) row.innerHTML+=`<span style="color:#1e3a5f;font-size:16px;user-select:none;cursor:grab;">⠿</span>`;
-
     // dot
-    row.innerHTML+=`<div class="dot${rec?' on':''}"></div>`;
+    const dot=document.createElement('div');
+    dot.className='status-dot'+(rec?' on':'');
+    row.appendChild(dot);
 
     // name
-    const nameWrap=document.createElement('div');
-    nameWrap.style.cssText='flex:1;min-width:0;';
     if(editMode){
-      nameWrap.innerHTML=`
-        <div style="display:flex;align-items:center;gap:7px;">
-          <span style="font-size:13px;font-family:'Noto Sans JP',sans-serif;color:${rec?'#b8d4f0':'#4a7090'};">${loc.name}</span>
-          <button class="btn" style="font-size:10px;padding:2px 7px;" onclick="startEditLocName(${loc.id},'${loc.name.replace(/'/g,"\\'")}')">名称変更</button>
-        </div>`;
+      const ni=document.createElement('input');
+      ni.className='setting-input';ni.style.cssText='flex:1;margin:0;font-size:13px;';
+      ni.value=loc.name;
+      ni.onchange=()=>{locs=locs.map(l=>l.id===loc.id?{...l,name:ni.value.trim()||l.name}:l);autoSave();};
+      row.appendChild(ni);
     } else {
-      nameWrap.innerHTML=`<span style="font-size:13px;font-family:'Noto Sans JP',sans-serif;color:${rec?'#b8d4f0':'#4a7090'};font-weight:${rec?'600':'400'};">${loc.name}</span>`;
-    }
-    row.appendChild(nameWrap);
-
-    // time
-    if(rec){
-      const timeDiv=document.createElement('div');
-      timeDiv.style.cssText='display:flex;align-items:center;gap:6px;';
-      timeDiv.innerHTML=`
-        <span style="font-family:'Share Tech Mono',monospace;font-size:15px;color:#00c8ff;font-variant-numeric:tabular-nums;letter-spacing:0.05em;">${fmt(rec)}</span>
-        <button class="btn" style="font-size:10px;padding:3px 7px;" onclick="startEditTime(${loc.id})">修正</button>
-      `;
-      row.appendChild(timeDiv);
+      const nm=document.createElement('div');
+      nm.className='loc-name'+(rec?' done':'');
+      nm.textContent=loc.name;
+      nm.style.flex='1';
+      row.appendChild(nm);
     }
 
-    // action
+    // time area
+    if(rec&&!editMode){
+      const td=document.createElement('div');
+      td.style.cssText='display:flex;align-items:center;gap:6px;flex-shrink:0;';
+      td.innerHTML=`
+        <span class="time-display">${fmt(rec)}</span>
+        <button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;" onclick="startEditTime(${loc.id})">修正</button>`;
+      row.appendChild(td);
+    }
+
+    // note toggle (only in patrol mode)
     if(!editMode){
-      const actionDiv=document.createElement('div');
-      if(!rec){
-        actionDiv.innerHTML=`<button class="btn-primary" onclick="startRecord(${loc.id})">▶ 開始</button>`;
-      } else {
-        actionDiv.innerHTML=`<button style="background:transparent;color:#cc4444;border:1px solid #3a1515;border-radius:7px;padding:5px 9px;font-size:11px;cursor:pointer;" onclick="clearRecord(${loc.id})">✕</button>`;
+      const nt=document.createElement('button');
+      nt.className='note-toggle';
+      nt.title='備考';
+      nt.innerHTML=hasNote?'📝':'＋';
+      nt.style.color=hasNote?'var(--warn)':'var(--text3)';
+      nt.onclick=()=>toggleNote(loc.id);
+      row.appendChild(nt);
+      if(hasNote){
+        const nb=document.createElement('div');
+        nb.className='note-badge';
+        row.appendChild(nb);
       }
-      row.appendChild(actionDiv);
+    }
+
+    // start/clear button
+    if(!editMode){
+      if(!rec){
+        const sb=document.createElement('button');
+        sb.className='start-btn';sb.textContent='▶ 開始';
+        sb.onclick=()=>startRecord(loc.id);
+        row.appendChild(sb);
+      } else {
+        const cb=document.createElement('button');
+        cb.style.cssText='background:transparent;color:var(--danger);border:1px solid #3a1515;border-radius:8px;padding:7px 10px;font-size:12px;';
+        cb.textContent='✕';
+        cb.onclick=()=>clearRecord(loc.id);
+        row.appendChild(cb);
+      }
     }
 
     // delete (edit mode)
     if(editMode){
-      const delDiv=document.createElement('div');
-      delDiv.innerHTML=`<button class="btn btn-danger" onclick="confirmDelete(${loc.id},this)">🗑</button>`;
-      row.appendChild(delDiv);
+      const db=document.createElement('button');
+      db.className='btn btn-danger-ghost';db.style.padding='6px 10px';db.textContent='🗑';
+      db.onclick=()=>confirmDeleteLoc(loc.id,db);
+      row.appendChild(db);
     }
 
-    list.appendChild(row);
+    wrap.appendChild(row);
+
+    // note area
+    if(!editMode){
+      const na=document.createElement('div');
+      na.className='note-area';
+      na.id=`note-area-${loc.id}`;
+      na.innerHTML=`
+        <div class="note-inner">
+          <textarea class="note-textarea" id="note-ta-${loc.id}"
+            placeholder="備考・異常・確認事項など..."
+            oninput="saveNote(${loc.id},this.value)">${note}</textarea>
+        </div>`;
+      wrap.appendChild(na);
+    }
+
+    list.appendChild(wrap);
   });
 }
 
-// ─── location actions ─────────────────────────────────────────────────────────
-function startRecord(id) {
-  records[id]=new Date();
-  renderLocations(); updateProgress(); autoSave();
+// ── NOTE ──────────────────────────────────────────────────────────────────────
+function toggleNote(id){
+  const area=document.getElementById(`note-area-${id}`);
+  if(!area)return;
+  const open=area.classList.toggle('open');
+  if(open){
+    const ta=document.getElementById(`note-ta-${id}`);
+    if(ta)ta.focus();
+  }
 }
-function clearRecord(id) {
-  delete records[id];
-  renderLocations(); updateProgress(); autoSave();
+function saveNote(id,val){
+  notes[id]=val;
+  autoSave();
 }
-function startEditTime(id) {
+
+// ── RECORD ACTIONS ────────────────────────────────────────────────────────────
+function startRecord(id){records[id]=new Date();renderLocs();updateProgress();autoSave();}
+function clearRecord(id){delete records[id];renderLocs();updateProgress();autoSave();}
+
+function startEditTime(id){
   const d=records[id]||new Date();
   const val=`${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  const row=document.querySelector(`[data-id="${id}"]`);
-  const timeDiv=row.querySelector('div[style*="gap:6px"]');
-  if(!timeDiv) return;
-  timeDiv.innerHTML=`
-    <input type="time" class="inp" style="width:90px;" value="${val}" id="time-inp-${id}" />
-    <button class="btn" style="background:#0057c8;" onclick="saveTime(${id})">✓</button>
-    <button class="btn" onclick="renderLocations()">✕</button>
-  `;
+  const wrap=document.querySelector(`[data-id="${id}"] .loc-row`);
+  if(!wrap)return;
+  const td=wrap.querySelector('.time-display')?.parentElement;
+  if(!td)return;
+  td.innerHTML=`
+    <div class="time-edit-wrap">
+      <input type="time" value="${val}" id="tei-${id}"/>
+      <button class="btn btn-primary" style="padding:6px 10px;" onclick="saveTime(${id})">✓</button>
+      <button class="btn btn-ghost" style="padding:6px 8px;" onclick="renderLocs()">✕</button>
+    </div>`;
 }
-function saveTime(id) {
-  const inp=document.getElementById('time-inp-'+id);
-  if(!inp) return;
+function saveTime(id){
+  const inp=document.getElementById(`tei-${id}`);
+  if(!inp)return;
   const [h,m]=inp.value.split(':').map(Number);
-  const d=new Date(); d.setHours(h,m,0,0);
-  records[id]=d;
-  renderLocations(); updateProgress(); autoSave();
+  const d=new Date();d.setHours(h,m,0,0);
+  records[id]=d;renderLocs();updateProgress();autoSave();
 }
 
-// ─── edit mode ────────────────────────────────────────────────────────────────
-function toggleEditMode() {
+// ── EDIT MODE ─────────────────────────────────────────────────────────────────
+function toggleEdit(){
   editMode=!editMode;
   const btn=document.getElementById('edit-mode-btn');
-  btn.textContent=editMode?'✅ 編集終了':'✏️ 場所を編集';
-  btn.style.boxShadow=editMode?'0 0 10px rgba(0,87,200,0.5)':'none';
-  btn.style.background=editMode?'#0057c8':'#0f2040';
+  btn.textContent=editMode?'✅ 完了':'✏️ 編集';
+  btn.className=editMode?'btn btn-primary':'btn btn-ghost';
   document.getElementById('add-loc-bar').style.display=editMode?'flex':'none';
   document.getElementById('drag-hint').style.display=editMode?'block':'none';
-  renderLocations();
+  renderLocs();
 }
-
-function startEditLocName(id, currentName) {
-  const row=document.querySelector(`[data-id="${id}"]`);
-  const nameWrap=row.querySelector('div[style*="flex:1"]');
-  nameWrap.innerHTML=`
-    <div style="display:flex;gap:5px;">
-      <input class="inp" style="flex:1;" value="${currentName}" id="locname-${id}"
-        onkeydown="if(event.key==='Enter')saveLocName(${id})" />
-      <button class="btn" style="background:#0057c8;" onclick="saveLocName(${id})">✓</button>
-      <button class="btn" onclick="renderLocations()">✕</button>
-    </div>`;
-  document.getElementById('locname-'+id).focus();
-}
-function saveLocName(id) {
-  const inp=document.getElementById('locname-'+id);
-  if(!inp) return;
-  const name=inp.value.trim();
-  if(!name) return;
-  locations=locations.map(l=>l.id===id?{...l,name}:l);
-  renderLocations(); autoSave();
-}
-
-function confirmDelete(id, btn) {
-  const wrap=btn.parentElement;
-  wrap.innerHTML=`
-    <span style="font-size:10px;color:#cc4444;">削除?</span>
-    <button class="btn btn-danger" style="background:#3a1515;" onclick="deleteLocation(${id})">はい</button>
-    <button class="btn" onclick="renderLocations()">いいえ</button>
-  `;
-}
-function deleteLocation(id) {
-  locations=locations.filter(l=>l.id!==id);
-  delete records[id];
-  renderLocations(); updateProgress(); autoSave();
-}
-
-function addLocation() {
+function addLoc(){
   const inp=document.getElementById('new-loc-input');
   const name=inp.value.trim();
-  if(!name) return;
-  locations=[...locations,{id:Date.now(),name}];
-  inp.value='';
-  renderLocations(); autoSave();
+  if(!name)return;
+  locs=[...locs,{id:Date.now(),name}];
+  inp.value='';renderLocs();autoSave();
+}
+function confirmDeleteLoc(id,btn){
+  const wrap=btn.parentElement;
+  wrap.innerHTML=`
+    <span style="font-size:11px;color:var(--danger);">削除?</span>
+    <button class="btn btn-danger-ghost" style="padding:4px 8px;font-size:11px;" onclick="deleteLoc(${id})">はい</button>
+    <button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;" onclick="renderLocs()">いいえ</button>`;
+}
+function deleteLoc(id){
+  locs=locs.filter(l=>l.id!==id);
+  delete records[id];delete notes[id];
+  renderLocs();updateProgress();autoSave();
 }
 
-// ─── complete patrol ──────────────────────────────────────────────────────────
-function showCompleteConfirm() { document.getElementById('complete-confirm').style.display='block'; }
-function hideCompleteConfirm() { document.getElementById('complete-confirm').style.display='none'; }
-function completePatrol() {
+// ── COMPLETE ──────────────────────────────────────────────────────────────────
+function showComplete(){document.getElementById('complete-confirm').style.display='block';}
+function hideComplete(){document.getElementById('complete-confirm').style.display='none';}
+function completePatrol(){
   const entry={
-    id:Date.now(), date:todayKey(),
+    id:Date.now(),date:todayKey(),
     name:patrolName||`巡回 ${new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}`,
     staffName:settings.staffName,
-    locations:[...locations],
-    records:serializeRecords(records),
+    locations:[...locs],
+    records:serRec(records),
+    notes:{...notes},
   };
   history=[entry,...history].slice(0,60);
-  lsSet(KEYS.history,history);
-  records={}; patrolName='';
-  updatePatrolNameDisplay();
-  renderLocations(); updateProgress();
-  hideCompleteConfirm();
-  showSaveStatus('saved');
+  ls.set(K.hist,history);
+  records={};notes={};patrolName='';
+  resetPNameCard();renderLocs();updateProgress();hideComplete();showSaved();
 }
 
-// ─── server send ──────────────────────────────────────────────────────────────
-function updateSendUrlStatus() {
-  const el=document.getElementById('send-url-status');
-  if(settings.serverUrl){ el.textContent=`送信先: ${settings.serverUrl.slice(0,40)}…`; el.style.color='#00aa66'; }
-  else { el.textContent='送信先URL未設定 (設定タブで追加)'; el.style.color='#cc4444'; }
+// ── SHARE ─────────────────────────────────────────────────────────────────────
+function buildReport(){
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'});
+  let txt=`【巡回記録】${dateStr}\n`;
+  if(patrolName)txt+=`${patrolName}\n`;
+  if(settings.staffName)txt+=`担当: ${settings.staffName}\n`;
+  txt+=`─────────────────\n`;
+  locs.forEach(loc=>{
+    const rec=records[loc.id];
+    const note=(notes[loc.id]||'').trim();
+    txt+=`${loc.name}　${rec?fmtShort(rec):'未記録'}\n`;
+    if(note)txt+=`  ✎ ${note}\n`;
+  });
+  const done=locs.filter(l=>records[l.id]).length;
+  txt+=`─────────────────\n完了: ${done}/${locs.length}`;
+  return txt;
 }
-async function handleSend() {
-  const btn=document.getElementById('send-btn');
-  if(!settings.serverUrl){
-    btn.textContent='URL未設定'; btn.style.background='linear-gradient(135deg,#3a1515,#661515)';
-    setTimeout(()=>{ btn.textContent='📡 送信'; btn.style.background='linear-gradient(135deg,#003580,#0055cc)'; },2500);
-    return;
-  }
-  btn.textContent='送信中…'; btn.style.animation='pulse 0.8s infinite';
-  try {
-    const payload={
-      date:todayKey(), name:patrolName, staffName:settings.staffName,
-      records:locations.map(l=>({ location:l.name, time:records[l.id]?records[l.id].toISOString():null })),
-    };
-    const res=await fetch(settings.serverUrl,{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
-    btn.textContent=res.ok?'✓ 送信完了':'✗ エラー';
-    btn.style.background=res.ok?'linear-gradient(135deg,#006633,#00aa55)':'linear-gradient(135deg,#660000,#aa2222)';
-  } catch {
-    btn.textContent='✗ エラー'; btn.style.background='linear-gradient(135deg,#660000,#aa2222)';
-  }
-  btn.style.animation='none';
-  setTimeout(()=>{ btn.textContent='📡 送信'; btn.style.background='linear-gradient(135deg,#003580,#0055cc)'; },3000);
+function openShare(){
+  document.getElementById('share-text').value=buildReport();
+  document.getElementById('copy-btn').textContent='📋 全てコピー';
+  document.getElementById('copy-btn').className='';
+  document.getElementById('copy-btn').id='copy-btn';
+  document.getElementById('share-modal').classList.add('open');
+}
+function closeShare(){document.getElementById('share-modal').classList.remove('open');}
+function closeShareOutside(e){if(e.target===document.getElementById('share-modal'))closeShare();}
+function copyReport(){
+  const text=document.getElementById('share-text').value;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(()=>showCopied()).catch(()=>fallbackCopy(text));
+  } else {fallbackCopy(text);}
+}
+function fallbackCopy(text){
+  const ta=document.getElementById('share-text');
+  ta.select();ta.setSelectionRange(0,99999);
+  document.execCommand('copy');
+  showCopied();
+}
+function showCopied(){
+  const btn=document.getElementById('copy-btn');
+  btn.textContent='✅ コピーしました！';
+  btn.style.background='linear-gradient(135deg,#065f46,#047857)';
+  btn.style.color='#6ee7b7';
+  setTimeout(()=>{
+    btn.textContent='📋 全てコピー';
+    btn.style.background='';btn.style.color='';
+  },2000);
 }
 
-// ─── history ──────────────────────────────────────────────────────────────────
-function renderHistory() {
+// ── CLEAR ─────────────────────────────────────────────────────────────────────
+function openClear(){document.getElementById('clear-confirm').classList.add('open');}
+function closeClear(){document.getElementById('clear-confirm').classList.remove('open');}
+function closeClearOutside(e){if(e.target===document.getElementById('clear-confirm'))closeClear();}
+function clearAll(){
+  records={};notes={};
+  renderLocs();updateProgress();autoSave();closeClear();
+}
+
+// ── HISTORY ───────────────────────────────────────────────────────────────────
+function renderHistory(){
   const hdr=document.getElementById('history-header');
   const list=document.getElementById('history-list');
   const detail=document.getElementById('history-detail');
-  hdr.textContent=`PATROL HISTORY — ${history.length} 件`;
-  detail.style.display='none'; list.style.display='block';
+  hdr.textContent=`PATROL HISTORY — ${history.length}件`;
+  detail.style.display='none';list.style.display='block';
   list.innerHTML='';
-  if(history.length===0){
-    list.innerHTML='<div class="card" style="color:#2a5a80;font-size:13px;text-align:center;padding:30px 0;">まだ完了した巡回記録がありません</div>';
-    return;
-  }
-  history.forEach(entry=>{
-    const total=entry.locations.length;
-    const done=Object.keys(entry.records).length;
-    const btn=document.createElement('button');
-    btn.className='hist-btn';
-    btn.style.marginBottom='8px';
+  if(!history.length){list.innerHTML='<div class="empty">まだ記録がありません</div>';return;}
+  history.forEach(e=>{
+    const total=e.locations.length,done=Object.keys(e.records).length;
+    const btn=document.createElement('div');
+    btn.className='hist-item';
     btn.innerHTML=`
       <div>
-        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#2a5a80;margin-bottom:3px;">${fmtDate(entry.date)}</div>
-        <div style="font-size:13px;color:#8ab8d8;font-family:'Noto Sans JP',sans-serif;">${entry.name}</div>
-        ${entry.staffName?`<div style="font-size:11px;color:#2a5a80;margin-top:2px;">担当: ${entry.staffName}</div>`:''}
+        <div class="hist-date">${fmtDate(e.date)}</div>
+        <div class="hist-name">${e.name}</div>
+        ${e.staffName?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">担当: ${e.staffName}</div>`:''}
       </div>
       <div style="text-align:right;">
-        <div style="font-family:'Share Tech Mono',monospace;font-size:16px;color:${done===total?'#00ff88':'#00c8ff'};">${done}/${total}</div>
-        <div style="font-size:10px;color:#1e3a5f;">完了</div>
+        <div class="hist-count" style="color:${done===total?'var(--success)':'var(--accent2)'};">${done}/${total}</div>
+        <div style="font-size:10px;color:var(--text3);">完了</div>
       </div>`;
-    btn.onclick=()=>showHistoryDetail(entry);
+    btn.onclick=()=>showHistDetail(e);
     list.appendChild(btn);
   });
 }
-
-function showHistoryDetail(entry) {
+function showHistDetail(e){
   const list=document.getElementById('history-list');
   const detail=document.getElementById('history-detail');
-  list.style.display='none'; detail.style.display='block';
+  list.style.display='none';detail.style.display='block';
   detail.innerHTML=`
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-      <button class="btn" onclick="renderHistory()">← 一覧へ</button>
-      <span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#4a7090;">${fmtDate(entry.date)} — ${entry.name}</span>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <button class="btn btn-ghost" onclick="renderHistory()">← 一覧</button>
+      <span style="font-size:12px;color:var(--text3);">${fmtDate(e.date)} — ${e.name}</span>
     </div>
-    ${entry.staffName?`<div class="card" style="margin-bottom:10px;font-size:12px;color:#4a7090;">担当: ${entry.staffName}</div>`:''}
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      ${entry.locations.map(loc=>{
-        const recISO=entry.records[loc.id];
-        const recD=recISO?new Date(recISO):null;
-        return `
-          <div class="card" style="display:flex;justify-content:space-between;align-items:center;background:${recD?'rgba(0,60,160,0.08)':'#0a1020'};">
+    ${e.staffName?`<div class="card" style="font-size:12px;color:var(--text2);margin-bottom:8px;">担当: ${e.staffName}</div>`:''}
+    ${e.locations.map(loc=>{
+      const rec=e.records[loc.id];
+      const note=(e.notes||{})[loc.id]||'';
+      const recD=rec?new Date(rec):null;
+      return `
+        <div class="card" style="margin-bottom:7px;background:${recD?'rgba(59,130,246,.07)':'var(--surface)'};">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
             <div style="display:flex;align-items:center;gap:8px;">
-              <div style="width:7px;height:7px;border-radius:50%;background:${recD?'#00c8ff':'#0f2040'};box-shadow:${recD?'0 0 5px #00c8ff':'none'};"></div>
-              <span style="font-size:13px;font-family:'Noto Sans JP',sans-serif;color:${recD?'#b8d4f0':'#3a5a70'};">${loc.name}</span>
+              <div style="width:7px;height:7px;border-radius:50%;background:${recD?'var(--accent2)':'var(--border)'};box-shadow:${recD?'0 0 5px var(--accent2)':'none'};flex-shrink:0;"></div>
+              <span style="font-size:14px;color:${recD?'var(--text)':'var(--text3)'};">${loc.name}</span>
             </div>
-            <span style="font-family:'Share Tech Mono',monospace;font-size:14px;color:${recD?'#00c8ff':'#1e3a5f'};font-variant-numeric:tabular-nums;">
-              ${recD?fmt(recD):'未記録'}
-            </span>
-          </div>`;
-      }).join('')}
-    </div>`;
+            <span class="time-display" style="font-size:15px;color:${recD?'var(--accent2)':'var(--text3)'};">${recD?fmtShort(recD):'未記録'}</span>
+          </div>
+          ${note?`<div style="margin-top:8px;font-size:12px;color:var(--warn);padding:6px 8px;background:rgba(245,158,11,.07);border-radius:6px;">✎ ${note}</div>`:''}
+        </div>`;
+    }).join('')}`;
 }
 
-// ─── settings actions ─────────────────────────────────────────────────────────
-function exportHistory() {
-  const blob=new Blob([JSON.stringify(history,null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download=`patrol_history_${todayKey()}.json`; a.click();
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+function exportHistory(){
+  const b=new Blob([JSON.stringify(history,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download=`patrol_${todayKey()}.json`;a.click();
 }
-function clearAllHistory() {
-  if(!confirm('全履歴を削除しますか？この操作は元に戻せません。')) return;
-  history=[]; lsSet(KEYS.history,[]);
-  renderHistory();
+function clearAllHistory(){
+  if(!confirm('全履歴を削除しますか？'))return;
+  history=[];ls.set(K.hist,[]);renderHistory();
 }
 
-// ─── boot ─────────────────────────────────────────────────────────────────────
+// ── BOOT ──────────────────────────────────────────────────────────────────────
 init();
 </script>
 </body>
